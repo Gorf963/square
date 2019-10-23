@@ -1,26 +1,37 @@
 use std::thread;
-use std::sync::mpsc::channel;
+use std::time;
+use std::sync::mpsc;
+use std::sync::mpsc::{Sender, Receiver};
 
 
 
-pub fn start_heartbeat(speed :u32) {
+
+pub fn start_heartbeat(speed :u64) -> mpsc::Sender<String> {
     
-    let (tx,rx) = channel();
+
+    let (heartbeat_control_tx,heardbeat_control_rx) = mpsc::channel();
+
+    //Set speed to millseconds
+    let speed: u64 = 1000*60/speed;
     
-    let sender = thread::spawn(move || {
-        tx.send("Hello thread".to_owned())
-            .expect("Unable to Send to channel");
+    thread::spawn(move || {
+        beat(speed, heardbeat_control_rx);
     });
-
-    let reciever = thread::spawn(move || {
-        let value = rx.recv().expect("UnAble to recieve from channel");
-    });
-    sender.join().expect("the send tghread panicked");
-    reciever.join().expect("the reciever thread has panicked");
+    return heartbeat_control_tx;
 }
-pub fn end_heartbeat(){
-
+pub fn end_heartbeat(heartbeat_control_tx: Sender<String>){
+    heartbeat_control_tx.send(format!("End")).expect("Error Sending");
 }
-pub fn beat(){
- println!("Beat from Child");
+fn beat(speed :u64, rx: Receiver<String>){
+  loop 
+  {
+    println!("Beat from Child");
+    thread::sleep(time::Duration::from_millis(speed));
+    let message = rx.try_recv();
+    if message.is_ok() {
+        if message.unwrap() == "End" {
+            break;
+        }
+    }
+  }
 }
