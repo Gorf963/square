@@ -10,6 +10,8 @@ use heartbeat::{start_heartbeat, end_heartbeat};
 fn main() {
     
     let heartbeat_sender: mpsc::Sender<String>;
+
+    
     heartbeat_sender = setup();
     pause();
     end_heartbeat(heartbeat_sender);
